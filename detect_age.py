@@ -32,7 +32,7 @@ def main():
     parser.add_argument('--file_name', '-f', type=str, default='imdb_data_2000.pkl',
                         help='Data set (image, label)')
     parser.add_argument('--white', '-w', type=bool, default=False,
-                		help='Preprocess whitening')
+                        help='Preprocess whitening')
     args = parser.parse_args()
 
 
