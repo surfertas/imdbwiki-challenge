@@ -28,6 +28,8 @@ can generate a reasonable model that can find some practical use, using only a
 subset of the training data, and a model with lower capacity relative to the
 architecture introduced in the referenced paper.
 
+The scripts to download and prepare the data hopefully will be useful for
+others.
 
 ### Usage
 To see sample usage, just git clone and run below.
