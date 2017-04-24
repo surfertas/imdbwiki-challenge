@@ -29,8 +29,7 @@ def main():
                         help='Number of times to train on data set')
 	parser.add_argument('--gpu', '-g', type=int, default=-1,
                         help='GPU ID: -1 indicates CPU')
-	parser.add_argument(
-	    '--file_name', '-f', type=str, default='imdb_data_2000.pkl',
+	parser.add_argument('--file_name', '-f', type=str, default='imdb_data_2000.pkl',
                         help='Data set (image, label)')
 	parser.add_argument('--white', '-w', type=bool, default=False,
                 		help='Preprocess whitening')
@@ -41,7 +40,7 @@ def main():
 	print("Age distribution of data is : {}".format(age_stats))
 
 	train_iter = chainer.iterators.SerialIterator(train, args.batch_size)
-    	test_iter = chainer.iterators.SerialIterator(test, args.batch_size,
+    test_iter = chainer.iterators.SerialIterator(test, args.batch_size,
                                                  repeat=False, shuffle=False)
 
 	model = L.Classifier(CNN(4))
