@@ -4,7 +4,7 @@
 # Reference: https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/
 # usage:
 # ./imdb_preprocess --partial 1000
-# (Will return 1000 samples from the training set.
+# (Will return <1000 samples from the training set as a result of filtering.
 #
 # Note: If --partial is not specified it will attempt to process
 # 	the entire data set.
@@ -19,107 +19,119 @@ import datetime
 import matplotlib.image as plt
 
 
-IMG_DIR = r'./data'
+IMG_DIR = r'/home/tasuku/ws/imdbwiki/data/imdb_crop'
 MAT_FILE = r'imdb.mat'
 
 
 def reformat_date(mat_date):
-    """
-    Extract only the year, necessary for calculating the age
-    of the individual in the image.
-    Args:
-            mat_date - raw date format.
-    """
-    dt = datetime.date.fromordinal(mat_date).year
-    return dt
+	""" Extract only the year.
+
+    Necessary for calculating the age of the individual in the image.
+	Args:
+		mat_date - raw date format.
+	"""
+	# Take account for difference in convention between matlab and python.
+	dt = datetime.date.fromordinal(np.max([mat_date - 366, 1])).year
+	return dt
 
 
 def create_path(path):
-    """Creates path to full path to image.
-    Args:
-            path - incomplete path
-    Returns:
-            fullpath
-    """
-    return os.path.join(IMG_DIR, path[0])
+	""" Creates path to full path to image.
+
+	Args:
+		path - incomplete path
+	Returns:
+		fullpath
+	"""
+	return os.path.join(IMG_DIR, path[0])
 
 
 def reformat_imdb():
-    """
-    Opens .mat file and reformats from matlab struct format to
-    dictionary of numpy arrays.
-    Returns:
-            imdb_dict - dict of numpy arrays.
-    """
-    mat_struct = sio.loadmat(os.path.join(IMG_DIR, MAT_FILE))
-    data_set = [data[0] for data in mat_struct['imdb'][0, 0]]
+	""" Opens .mat file and reformats.
 
-    keys = ['dob',
-            'photo_taken',
-            'full_path',
-            'gender',
-            'name',
-            'face_location',
-            'face_score',
-            'second_face_score',
-            'celeb_names',
-            'celeb_id'
-            ]
+    Matlab struct format to dictionary of numpy arrays.
+	Returns:
+		imdb_dict - dict of numpy arrays.
+	"""
+	mat_struct = sio.loadmat(os.path.join(IMG_DIR, MAT_FILE))
+	data_set = [data[0] for data in mat_struct['imdb'][0, 0]]
 
-    imdb_dict = dict(zip(keys, np.asarray(data_set)))
-    imdb_dict['dob'] = [reformat_date(dob) for dob in imdb_dict['dob']]
-    imdb_dict['full_path'] = [create_path(path)
-                              for path in imdb_dict['full_path']]
+	keys = ['dob',
+		'photo_taken',
+		'full_path',
+		'gender',
+		'name',
+		'face_location',
+        	'face_score',
+		'second_face_score',
+		'celeb_names',
+		'celeb_id'
+		]
 
-    # Add 'age' key to the dictionary
-    imdb_dict['age'] = imdb_dict['photo_taken'] - imdb_dict['dob']
+	imdb_dict = dict(zip(keys, np.asarray(data_set)))
+	imdb_dict['dob'] = [reformat_date(dob) for dob in imdb_dict['dob']]
+	imdb_dict['full_path'] = [create_path(path)
+	                                      for path in imdb_dict['full_path']]
 
-    return imdb_dict
+	# Add 'age' key to the dictionary
+	imdb_dict['age'] = imdb_dict['photo_taken'] - imdb_dict['dob']
+
+	return imdb_dict
 
 
 def create_and_dump(imdb_dict, partial):
-    """
-    Creates dictionary of inputs and labels and pickles.
-    Args:
-            img_paths - full path to image.
-    """
-    age = imdb_dict['age']
-    imgs = imdb_dict['full_path']
+	""" Creates dictionary of inputs and labels and pickles.
+	Args:
+		img_paths - full path to image.
+	"""
 
-    if partial != 0:
-        imgs = imdb_dict['full_path'][:partial]
-        age = age[:partial]
+ 	raw_path = imdb_dict['full_path']
+    raw_age = imdb_dict['age']
+	raw_sface = imdb_dict['second_face_score']
 
-    # Convert images path to images.
-    imgs = [np.asarray(spm.imresize(spm.imread(img_path, flatten=1), (128, 128)), dtype=np.float32)
-            for img_path in imgs
-            ]
+	if partial != 0:
+        raw_path = imdb_dict['full_path'][:partial]
+        raw_age = imdb_dict['age'][:partial]
+		raw_sface = imdb_dict['second_face_score'][:partial]
 
-    data = {'image_inputs': np.array(imgs),
-            'age_labels': np.array(age)
-            }
+	age = []
+	imgs = []
+	for i, sface in enumerate(raw_sface):
+		if not np.isnan(sface) and raw_age[i] >= 0:
+			age.append(raw_age[i])
+			imgs.append(raw_path[i])
 
-    with open(os.path.join(IMG_DIR,
-                           "pkl_folder/imdb_data_{}.pkl".format(partial)),
-              'wb') as f:
-        pickle.dump(data, f)
+	# Convert images path to images.
+	imgs = [np.asarray(spm.imresize(spm.imread(img_path, flatten=1), (128, 128)), dtype=np.float32)
+		for img_path in imgs
+		]
+
+	data = {'image_inputs': np.array(imgs),
+			'age_labels': np.array(age)
+			}
+
+	print("Number of samples reduced to: {}".format(len(data['image_inputs']))
+	with open(os.path.join(IMG_DIR,
+			"pkl_folder/imdb_data_{}.pkl".format(partial)),
+			'wb') as f:
+		pickle.dump(data, f)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='IMDB data reformat script.')
-    parser.add_argument('--partial', '-p', type=int, default=0,
+	parser=argparse.ArgumentParser(description='IMDB data reformat script.')
+	parser.add_argument('--partial', '-p', type=int, default=0,
                         help='The number of samples to use.')
-    args = parser.parse_args()
+	args=parser.parse_args()
 
-    imdb_dict = reformat_imdb()
-    print("Dictionary created...")
 
-    print("Converting {} samples. (0=all samples)".format(args.partial))
-    create_and_dump(imdb_dict, args.partial)
+	imdb_dict=reformat_imdb()
+	print("Dictionary created...")
 
-    print(
-        "File dumped to data/pkl_folder/imdb_data_{}.pkl.".format(args.partial))
+	print("Converting {} samples. (0=all samples)".format(args.partial))
+	create_and_dump(imdb_dict, args.partial)
+
+	print("File dumped to imdb_data_{}.pkl.".format(args.partial))
 
 
 if __name__ == "__main__":
-    main()
+	main()
