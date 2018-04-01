@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#
 # Script to reformat the IMDB data from matlab to numpy arrays.
 # Flattens all images to gray scale and resizes to (128,128)
 # Reference: https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/
@@ -8,6 +9,7 @@
 #
 # Note: If --partial is not specified it will attempt to process
 # 	the entire data set.
+
 
 import os
 import argparse
