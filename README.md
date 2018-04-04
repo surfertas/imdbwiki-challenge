@@ -8,7 +8,8 @@ data source:
 paper: [DEX: Deep EXpectation of apparent age from a single
 image](https://www.vision.ee.ethz.ch/en/publications/papers/proceedings/eth_biwi_01229.pdf)
 
-related blog post:[surfertas notes](http://surfertas.github.io/deeplearning/2017/04/18/imdbwiki.html)
+related blog post:
+1. [IMDB-WIKI: trying a small model for age classification](http://surfertas.github.io/deeplearning/2017/04/18/imdbwiki.html)
 
 Note: Completed as part of [Idein](https://idein.jp/) Residence Program
 
